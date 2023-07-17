@@ -9,9 +9,9 @@ from discord        import (
 from typing         import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from classes.bot    import TealBot
+    from classes.bot import TealBot
 ################################################################################
-class Profiles(Cog):
+class Commissions(Cog):
 
     def __init__(self, bot: "TealBot"):
 
@@ -83,6 +83,19 @@ class Profiles(Cog):
         ),
     ) -> None:
 
-        pass
+        self.bot.commission_manager.add_commission(
+            ctx,
+            member,
+            item,
+            qty,
+            vip,
+            rush,
+            price
+        )
+
+################################################################################
+def setup(bot: "TealBot") -> None:
+
+    bot.add_cog(Commissions(bot))
 
 ################################################################################

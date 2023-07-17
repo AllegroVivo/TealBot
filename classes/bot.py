@@ -23,3 +23,9 @@ class TealBot(Bot):
         self._commission_manager: CommissionManager = CommissionManager(self)
 
 ################################################################################
+    @property
+    def commission_manager(self) -> CommissionManager:
+
+        return self._commission_manager
+
+################################################################################

@@ -2,6 +2,8 @@ import os
 
 from discord    import Intents
 from dotenv     import load_dotenv
+
+from classes.bot    import TealBot
 ################################################################################
 
 bot = TealBot(

@@ -5,6 +5,7 @@ from discord import User
 from typing import TYPE_CHECKING, List, Optional
 
 from .commission import TCommission
+from utilities import *
 
 if TYPE_CHECKING:
     pass
@@ -43,5 +44,24 @@ class TClient:
         self._communication_method: Optional[CommunicationMethod] = None
         self._email: Optional[str] = None
         self._paypal: Optional[str] = None
+
+################################################################################
+    def update(self) -> None:
+
+        c = db_connection.cursor()
+        c.execute(
+            "UPDATE clients SET name = %s, communication_method = %s, "
+            "notes = %s, tags = %s, update_date = %s, email = %s, paypal = %s "
+            "WHERE user_id = %s",
+            (
+                self._name, self._communication_method, self._notes, self._tags,
+                self._update_date, self._email, self._paypal, self._user.id
+            )
+        )
+
+        db_connection.commit()
+        c.close()
+
+        return
 
 ################################################################################
