@@ -58,6 +58,43 @@ def assert_db_structure() -> None:
         "complete_date TIMESTAMP,"
         "CONSTRAINT commissions_pkey PRIMARY KEY (commission_id))"
     )
+    c.execute(
+        "CREATE TABLE IF NOT EXISTS commission_items("
+        "commission_id BIGINT NOT NULL,"
+        "commission_type INTEGER,"
+        "quantity INTEGER,"
+        "completed BOOLEAN)"
+    )
+
+    db_connection.commit()
+    c.close()
+
+    return
+
+################################################################################
+def new_commission_entry(commission_id: int, user_id: int) -> None:
+
+    c = db_connection.cursor()
+    c.execute(
+        "INSERT INTO commissions (commission_id, user_id) "
+        "VALUES (%s, %s)",
+        (commission_id, user_id)
+    )
+
+    db_connection.commit()
+    c.close()
+
+    return
+
+################################################################################
+def new_client_entry(user_id: int) -> None:
+
+    c = db_connection.cursor()
+    c.execute(
+        "INSERT INTO clients (user_id) "
+        "VALUES (%s)",
+        (user_id,)
+    )
 
     db_connection.commit()
     c.close()

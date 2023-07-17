@@ -29,6 +29,18 @@ class CommissionManager:
         self._commissions: List[TCommission] = []
 
 ################################################################################
+    @property
+    def bot(self) -> TealBot:
+
+        return self._parent
+
+################################################################################
+    @property
+    def commissions(self) -> List[TCommission]:
+
+        return self._commissions
+
+################################################################################
     def add_commission(
         self,
         ctx: ApplicationContext,
@@ -40,7 +52,13 @@ class CommissionManager:
         price: Optional[int],
     ) -> None:
 
-        pass
+        comm = self._get_commission_raw(ctx, user, item, qty, vip, rush, price)
+        if comm is not None:
+            raise ValueError("Possible duplicate commission already exists.")
+
+        commission = TCommission(
+
+        )
 
 ################################################################################
     def _get_commission_raw(
@@ -52,5 +70,15 @@ class CommissionManager:
         vip: bool,
         rush: bool,
         price: Optional[int],
-    ) -> None:
+    ) -> Optional[TCommission]:
+
+        # Compare to all open commissions and see if we can find a match.
+        return
+
+################################################################################
+    @property
+    def open_commissions(self) -> List[TCommission]:
+
+        return [c for c in self._commissions if c.in_progress]
+
 ################################################################################

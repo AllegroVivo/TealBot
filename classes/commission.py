@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, Type, TypeVar
 
 from utilities import *
 
@@ -15,6 +15,8 @@ __all__ = (
     "TCommission",
     "TCommissionItem",
 )
+
+TC = TypeVar("TC", bound="TCommission")
 
 ################################################################################
 @dataclass
@@ -42,28 +44,175 @@ class TCommission:
         "_paid_date",
         "_update_date",
         "_complete_date",
+        "_commission_date",
+        "_vip",
+        "_rush",
     )
 
 ################################################################################
-    def __init__(self):
+    def __init__(
+        self,
+        _id: str,
+        client: TClient,
+        items: List[TCommissionItem],
+        tags: List[CommissionTag],
+        price: int,
+        description: Optional[str],
+        notes: Optional[str],
+        status: CommissionStatus,
+        paid: bool,
+        vip: bool,
+        rush: bool,
+        commission_date: datetime,
+        update_date: datetime,
+        start_date: Optional[datetime],
+        deadline: Optional[datetime],
+        paid_date: Optional[datetime],
+        complete_date: Optional[datetime]
+    ):
 
-        self._id: UUID = None  # type: ignore
-        self._client: TClient = None  # type: ignore
-        self._items: List[TCommissionItem] = []
-        self._tags: List[CommissionTag] = []
+        self._id: str = _id
+        self._client: TClient = client
+        self._items: List[TCommissionItem] = items
+        self._tags: List[CommissionTag] = tags
 
-        self._price: int = 0
-        self._description: Optional[str] = None
-        self._notes: Optional[str] = None
+        self._price: int = price
+        self._description: Optional[str] = description
+        self._notes: Optional[str] = notes
 
-        self._status: CommissionStatus = CommissionStatus.Pending
-        self._paid: bool = False
+        self._status: CommissionStatus = status
+        self._paid: bool = paid
+        self._vip: bool = vip
+        self._rush: bool = rush
 
-        self._start_date: Optional[datetime] = None
-        self._deadline: Optional[datetime] = None
-        self._paid_date: Optional[datetime] = None
-        self._update_date: Optional[datetime] = None
-        self._complete_date: Optional[datetime] = None
+        self._commission_date: datetime = commission_date
+        self._update_date: datetime = update_date
+        self._start_date: Optional[datetime] = start_date
+        self._deadline: Optional[datetime] = deadline
+        self._paid_date: Optional[datetime] = paid_date
+        self._complete_date: Optional[datetime] = complete_date
+
+################################################################################
+    @classmethod
+    def new(cls: Type[TC], ) -> TC:
+
+
+
+        return cls(
+            _id=str(uuid4()),
+            client=None,
+            items=[],
+            tags=[],
+            price=0,
+            description=None,
+            notes=None,
+            status=CommissionStatus.Pending,
+            paid=False,
+            vip=False,
+            rush=False,
+            commission_date=datetime.now(),
+            update_date=datetime.now(),
+            start_date=None,
+            deadline=None,
+            paid_date=None,
+            complete_date=None
+        )
+
+################################################################################
+    @property
+    def client(self) -> TClient:
+
+        return self._client
+
+################################################################################
+    @property
+    def items(self) -> List[TCommissionItem]:
+
+        return self._items
+
+################################################################################
+    @property
+    def tags(self) -> List[CommissionTag]:
+
+        return self._tags
+
+################################################################################
+    @property
+    def price(self) -> int:
+
+        return self._price
+
+################################################################################
+    @property
+    def description(self) -> Optional[str]:
+
+        return self._description
+
+################################################################################
+    @property
+    def notes(self) -> Optional[str]:
+
+        return self._notes
+
+################################################################################
+    @property
+    def status(self) -> CommissionStatus:
+
+        return self._status
+
+################################################################################
+    @property
+    def paid(self) -> bool:
+
+        return self._paid
+
+################################################################################
+    @property
+    def start_date(self) -> datetime:
+
+        return self._start_date
+
+################################################################################
+    @property
+    def deadline(self) -> datetime:
+
+        return self._deadline
+
+################################################################################
+    @property
+    def paid_date(self) -> Optional[datetime]:
+
+        return self._paid_date
+
+################################################################################
+    @property
+    def update_date(self) -> datetime:
+
+        return self._update_date
+
+################################################################################
+    @property
+    def complete_date(self) -> Optional[datetime]:
+
+        return self._complete_date
+
+################################################################################
+    @property
+    def vip(self) -> bool:
+
+        return self._vip
+
+################################################################################
+    @property
+    def rush(self) -> bool:
+
+        return self._rush
+
+################################################################################
+    @property
+    def in_progress(self) -> bool:
+
+        return self._complete_date is None
 
 ################################################################################
     def update(self) -> None:
@@ -73,12 +222,12 @@ class TCommission:
             "UPDATE commissions SET items = %s, tags = %s, price = %s, "
             "description = %s, notes = %s, status = %s, paid = %s, "
             "start_date = %s, deadline = %s, paid_date = %s, update_date = %s, "
-            "complete_date = %s WHERE commission_id = %s",
+            "complete_date = %s, vip = %s, rush = %s WHERE commission_id = %s",
             (
                 self._items, self._tags, self._price, self._description,
                 self._notes, self._status, self._paid, self._start_date,
                 self._deadline, self._paid_date, self._update_date,
-                self._complete_date, self._id
+                self._complete_date, self._vip, self._rush, self._id.hex
             )
         )
 
