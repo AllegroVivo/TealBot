@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+from discord import Embed, EmbedField, User
 from typing import TYPE_CHECKING, List, Optional, Type, TypeVar
 
 from utilities import *
 
 if TYPE_CHECKING:
-    from uuid import UUID
     from .client import TClient
 ################################################################################
 
@@ -27,6 +27,18 @@ class TCommissionItem:
     _completed: bool
 
 ################################################################################
+    def __eq__(self, other: TCommissionItem) -> bool:
+
+        return (
+            self._type == other._type
+            and self._qty == other._qty
+
+            # Not sure if we should compare completion status.
+            # Let's not for now.
+            # and self._completed == other._completed
+        )
+
+################################################################################
 class TCommission:
 
     __slots__ = (
@@ -37,6 +49,7 @@ class TCommission:
         "_tags",
         "_description",
         "_notes",
+        "_create_date",
         "_start_date",
         "_deadline",
         "_status",  # Will include "Completed" so we don't need to duplicate that below.
@@ -44,7 +57,6 @@ class TCommission:
         "_paid_date",
         "_update_date",
         "_complete_date",
-        "_commission_date",
         "_vip",
         "_rush",
     )
@@ -63,7 +75,7 @@ class TCommission:
         paid: bool,
         vip: bool,
         rush: bool,
-        commission_date: datetime,
+        create_date: datetime,
         update_date: datetime,
         start_date: Optional[datetime],
         deadline: Optional[datetime],
@@ -85,7 +97,7 @@ class TCommission:
         self._vip: bool = vip
         self._rush: bool = rush
 
-        self._commission_date: datetime = commission_date
+        self._create_date: datetime = create_date
         self._update_date: datetime = update_date
         self._start_date: Optional[datetime] = start_date
         self._deadline: Optional[datetime] = deadline
@@ -94,12 +106,20 @@ class TCommission:
 
 ################################################################################
     @classmethod
-    def new(cls: Type[TC], ) -> TC:
+    def new(
+        cls: Type[TC],
+        user: User,
+        item: str,
+        qty: int,
+        vip: bool,
+        rush: bool,
+        price: Optional[int],
+    ) -> TC:
 
-
+        # Make TClient object here
 
         return cls(
-            _id=str(uuid4()),
+            _id=...,
             client=None,
             items=[],
             tags=[],
@@ -110,13 +130,18 @@ class TCommission:
             paid=False,
             vip=False,
             rush=False,
-            commission_date=datetime.now(),
+            create_date=datetime.now(),
             update_date=datetime.now(),
             start_date=None,
             deadline=None,
             paid_date=None,
             complete_date=None
         )
+
+################################################################################
+    def status(self) -> Embed:
+
+        pass
 
 ################################################################################
     @property
@@ -213,6 +238,19 @@ class TCommission:
     def in_progress(self) -> bool:
 
         return self._complete_date is None
+
+################################################################################
+    def offer_to_merge(
+        self,
+        comm: TCommission,
+        item: str,
+        qty: int,
+        vip: bool,
+        rush: bool,
+        price: Optional[int]
+    ) -> bool:
+
+        pass
 
 ################################################################################
     def update(self) -> None:

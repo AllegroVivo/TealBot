@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from discord import User
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, Type, TypeVar
 
 from .commission import TCommission
 from utilities import *
@@ -14,6 +14,8 @@ if TYPE_CHECKING:
 __all__ = (
     "TClient",
 )
+
+TC = TypeVar("TC", bound="TClient")
 
 ################################################################################
 class TClient:
@@ -31,9 +33,12 @@ class TClient:
     )
 
 ################################################################################
-    def __init__(self):
+    def __init__(self, user: User):
 
-        self._user: User = None  # type: ignore
+        # Add to the database first.
+        new_client_entry(user)
+
+        self._user: User = user
         self._commissions: List[TCommission] = []
 
         self._name: str = None  # type: ignore

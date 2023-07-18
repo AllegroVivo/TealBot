@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from discord import ApplicationContext, User
+from discord import Interaction, User
 from typing import TYPE_CHECKING, List, Optional
 
 from utilities import *
@@ -8,6 +8,7 @@ from utilities import *
 if TYPE_CHECKING:
     from .bot import TealBot
     from .commission import TCommission
+    from .client import TClient
 ################################################################################
 
 __all__ = (
@@ -19,7 +20,8 @@ class CommissionManager:
 
     __slots__ = (
         "_parent",
-        "_commissions"
+        "_commissions",
+        "_clients",
     )
 
 ################################################################################
@@ -27,6 +29,7 @@ class CommissionManager:
 
         self._parent: TealBot = parent
         self._commissions: List[TCommission] = []
+        self._clients: List[TClient] = []
 
 ################################################################################
     @property
@@ -41,9 +44,15 @@ class CommissionManager:
         return self._commissions
 
 ################################################################################
+    @property
+    def clients(self) -> List[TClient]:
+
+        return self._clients
+
+################################################################################
     def add_commission(
         self,
-        ctx: ApplicationContext,
+        interaction: Interaction,
         user: User,
         item: str,
         qty: int,
@@ -52,28 +61,15 @@ class CommissionManager:
         price: Optional[int],
     ) -> None:
 
-        comm = self._get_commission_raw(ctx, user, item, qty, vip, rush, price)
-        if comm is not None:
-            raise ValueError("Possible duplicate commission already exists.")
+        for comm in self._commissions:
+            if comm.client == user:
+                comm.offer_to_merge(comm, item, qty, vip, rush, price)
+                return
 
-        commission = TCommission(
-
-        )
-
-################################################################################
-    def _get_commission_raw(
-        self,
-        ctx: ApplicationContext,
-        user: User,
-        item: str,
-        qty: int,
-        vip: bool,
-        rush: bool,
-        price: Optional[int],
-    ) -> Optional[TCommission]:
-
-        # Compare to all open commissions and see if we can find a match.
-        return
+        new_comm = TCommission.new(user, item, qty, vip, rush, price)
+        confirm = self.confirm_new_commission(new_comm)
+        if confirm:
+            self._commissions.append(new_comm)
 
 ################################################################################
     @property

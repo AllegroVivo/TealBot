@@ -2,9 +2,14 @@ from __future__ import annotations
 
 import os
 import psycopg2
+import uuid
 
+from datetime import datetime
+from discord import User
 from dotenv import load_dotenv
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
+
+from .enums import *
 
 if TYPE_CHECKING:
     pass
@@ -13,6 +18,8 @@ if TYPE_CHECKING:
 __all__ = (
     "db_connection",
     "assert_db_structure",
+    "new_commission_entry",
+    "new_client_entry",
 )
 
 ################################################################################
@@ -56,6 +63,9 @@ def assert_db_structure() -> None:
         "paid_date TIMESTAMP,"
         "update_date TIMESTAMP,"
         "complete_date TIMESTAMP,"
+        "vip BOOLEAN,"
+        "rush BOOLEAN,"
+        "create_date TIMESTAMP,"
         "CONSTRAINT commissions_pkey PRIMARY KEY (commission_id))"
     )
     c.execute(
@@ -72,28 +82,48 @@ def assert_db_structure() -> None:
     return
 
 ################################################################################
-def new_commission_entry(commission_id: int, user_id: int) -> None:
+def new_commission_entry(
+    user_id: int,
+    price: int,
+    description: Optional[str],
+    deadline: Optional[datetime],
+    status: CommissionStatus,
+    vip: bool,
+    rush: bool,
+    paid: bool,
+    create_date: Optional[datetime],
+    start_date: Optional[datetime],
+    update_date: datetime,
+    paid_date: Optional[datetime],
+    complete_date: Optional[datetime],
+) -> str:
+
+    commission_id = uuid.uuid4().hex
 
     c = db_connection.cursor()
     c.execute(
-        "INSERT INTO commissions (commission_id, user_id) "
-        "VALUES (%s, %s)",
-        (commission_id, user_id)
+        "INSERT INTO commissions ("
+        "commission_id, user_id, price, description, deadline, status, vip, rush, "
+        "paid, create_date, start_date, update_date, paid_date, complete_date)"
+        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+        (
+            commission_id, user_id, price, description, deadline, status, vip, rush,
+            paid, create_date, start_date, update_date, paid_date, complete_date
+        )
     )
-
     db_connection.commit()
     c.close()
 
-    return
+    return commission_id
 
 ################################################################################
-def new_client_entry(user_id: int) -> None:
+def new_client_entry(user: User) -> None:
 
     c = db_connection.cursor()
     c.execute(
         "INSERT INTO clients (user_id) "
         "VALUES (%s)",
-        (user_id,)
+        (user.id,)
     )
 
     db_connection.commit()
