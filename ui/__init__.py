@@ -1,4 +1,4 @@
-from .bot import *
-from .commissions import *
-from .config import *
+from .clients import *
+from .common import *
+from .view import *
 ################################################################################

@@ -20,6 +20,12 @@ class Internal(Cog):
         print("Asserting database structure...")
         assert_db_structure()
 
+        print("Loading Client data...")
+        await self.bot.load_clients()
+
+        # print("Loading commission data...")
+        # await self.bot.load_commissions()
+
         print("TealBot Online!")
 
 ################################################################################

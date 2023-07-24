@@ -9,7 +9,7 @@ from classes.bot    import TealBot
 bot = TealBot(
     description="FrogBot is Best!",
     intents=Intents.default(),
-    debug_guilds=[389751128784502785]
+    debug_guilds=[389751128784502785, 303742308874977280, 955933227372122173]
 )
 
 ################################################################################

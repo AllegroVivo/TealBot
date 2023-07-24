@@ -1,8 +1,9 @@
+from discord import SelectOption
 from enum   import Enum
+from typing import List
 ################################################################################
 
 __all__ = (
-    "CommissionType",
     "ClientTag",
     "CommunicationMethod",
     "CommissionStatus",
@@ -10,21 +11,15 @@ __all__ = (
 )
 
 ################################################################################
-class CommissionType(Enum):
+class TealEnum(Enum):
 
-    Chibi = 1
-    Chibify = 2
-    Emote = 3
-    Sticker = 4
-    TwitchPanel = 5
-    TwitchSubBadge = 6
-    TwitchSubFlair = 7
-    TwitchScene = 8
-    Avatar = 9
-    Other = 10
+    @property
+    def proper_name(self) -> str:
+
+        return self.name
 
 ################################################################################
-class ClientTag(Enum):
+class ClientTag(TealEnum):
 
     # General
     Active = 1
@@ -44,14 +39,32 @@ class ClientTag(Enum):
     Other = 10
 
 ################################################################################
-class CommunicationMethod(Enum):
+    @staticmethod
+    def select_options() -> List[SelectOption]:
+
+        return [
+            SelectOption(label=option.proper_name, value=str(option.value))
+            for option in ClientTag
+        ]
+
+################################################################################
+class CommunicationMethod(TealEnum):
 
     Discord = 1
     Email = 2
     Other = 3
 
 ################################################################################
-class CommissionStatus(Enum):
+    @staticmethod
+    def select_options() -> List[SelectOption]:
+
+        return [
+            SelectOption(label=option.proper_name, value=str(option.value))
+            for option in CommunicationMethod
+        ]
+
+################################################################################
+class CommissionStatus(TealEnum):
 
     Pending = 1
     InProgress = 2
@@ -61,7 +74,7 @@ class CommissionStatus(Enum):
     Other = 6
 
 ################################################################################
-class CommissionTag(Enum):
+class CommissionTag(TealEnum):
 
     # General
     Commission = 1

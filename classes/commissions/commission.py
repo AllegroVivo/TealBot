@@ -5,38 +5,20 @@ from datetime import datetime
 from discord import Embed, EmbedField, User
 from typing import TYPE_CHECKING, List, Optional, Type, TypeVar
 
+from assets import BotEmojis
+from .dates import TCommissionDates
 from utilities import *
 
 if TYPE_CHECKING:
     from .client import TClient
+    from .item import TCommissionItem
 ################################################################################
 
 __all__ = (
     "TCommission",
-    "TCommissionItem",
 )
 
 TC = TypeVar("TC", bound="TCommission")
-
-################################################################################
-@dataclass
-class TCommissionItem:
-
-    _type: CommissionType
-    _qty: int
-    _completed: bool
-
-################################################################################
-    def __eq__(self, other: TCommissionItem) -> bool:
-
-        return (
-            self._type == other._type
-            and self._qty == other._qty
-
-            # Not sure if we should compare completion status.
-            # Let's not for now.
-            # and self._completed == other._completed
-        )
 
 ################################################################################
 class TCommission:
@@ -47,16 +29,10 @@ class TCommission:
         "_items",
         "_price",
         "_tags",
-        "_description",
         "_notes",
-        "_create_date",
-        "_start_date",
-        "_deadline",
+        "_dates",
         "_status",  # Will include "Completed" so we don't need to duplicate that below.
         "_paid",
-        "_paid_date",
-        "_update_date",
-        "_complete_date",
         "_vip",
         "_rush",
     )
@@ -69,47 +45,26 @@ class TCommission:
         items: List[TCommissionItem],
         tags: List[CommissionTag],
         price: int,
-        description: Optional[str],
         notes: Optional[str],
         status: CommissionStatus,
         paid: bool,
         vip: bool,
         rush: bool,
-        create_date: datetime,
-        update_date: datetime,
-        start_date: Optional[datetime],
-        deadline: Optional[datetime],
-        paid_date: Optional[datetime],
-        complete_date: Optional[datetime]
+        create_date: datetime
     ):
 
         self._id: str = _id
         self._client: TClient = client
-        self._items: List[TCommissionItem] = items
-        self._tags: List[CommissionTag] = tags
 
-        self._price: int = price
-        self._description: Optional[str] = description
-        self._notes: Optional[str] = notes
-
-        self._status: CommissionStatus = status
-        self._paid: bool = paid
-        self._vip: bool = vip
-        self._rush: bool = rush
-
-        self._create_date: datetime = create_date
-        self._update_date: datetime = update_date
-        self._start_date: Optional[datetime] = start_date
-        self._deadline: Optional[datetime] = deadline
-        self._paid_date: Optional[datetime] = paid_date
-        self._complete_date: Optional[datetime] = complete_date
+        self._details: TCommissionDetails = TCommissionDetails(self, items, tags, price, notes)
+        self._dates: TCommissionDates = TCommissionDates(self, create_date)
 
 ################################################################################
     @classmethod
     def new(
         cls: Type[TC],
         user: User,
-        item: str,
+        item: int,
         qty: int,
         vip: bool,
         rush: bool,
@@ -141,7 +96,34 @@ class TCommission:
 ################################################################################
     def status(self) -> Embed:
 
-        pass
+        vip_emoji = BotEmojis.Check if self._vip else BotEmojis.Cross
+        rush_emoji = BotEmojis.Check if self._rush else BotEmojis.Cross
+
+        paid_emote = BotEmojis.Check if self._paid else BotEmojis.Cross
+        paid_text = "Paid" if self._paid else "Unpaid"
+        price_field = (
+            f"{paid_emote} - `{self.price}`\n"
+            f"*({paid_text})*"
+        )
+
+        fields = [
+            EmbedField(name="__Client__", value=self.client.mention, inline=True),
+            EmbedField(name="__VIP Comm__", value=vip_emoji, inline=True),
+            EmbedField(name="__Rush Comm__", value=rush_emoji, inline=True),
+
+            EmbedField(name="__Commission Items__", value="`Placeholder~`", inline=True),
+            EmbedField(name="__Price__", value=price_field, inline=True),
+
+            EmbedField(name="__Current Status__", value=f"`{self._status.name}`", inline=True),
+
+
+        ]
+
+################################################################################
+    @property
+    def id(self) -> str:
+
+        return self._id
 
 ################################################################################
     @property
@@ -169,19 +151,13 @@ class TCommission:
 
 ################################################################################
     @property
-    def description(self) -> Optional[str]:
-
-        return self._description
-
-################################################################################
-    @property
     def notes(self) -> Optional[str]:
 
         return self._notes
 
 ################################################################################
     @property
-    def status(self) -> CommissionStatus:
+    def commission_status(self) -> CommissionStatus:
 
         return self._status
 
@@ -190,36 +166,6 @@ class TCommission:
     def paid(self) -> bool:
 
         return self._paid
-
-################################################################################
-    @property
-    def start_date(self) -> datetime:
-
-        return self._start_date
-
-################################################################################
-    @property
-    def deadline(self) -> datetime:
-
-        return self._deadline
-
-################################################################################
-    @property
-    def paid_date(self) -> Optional[datetime]:
-
-        return self._paid_date
-
-################################################################################
-    @property
-    def update_date(self) -> datetime:
-
-        return self._update_date
-
-################################################################################
-    @property
-    def complete_date(self) -> Optional[datetime]:
-
-        return self._complete_date
 
 ################################################################################
     @property
@@ -232,25 +178,6 @@ class TCommission:
     def rush(self) -> bool:
 
         return self._rush
-
-################################################################################
-    @property
-    def in_progress(self) -> bool:
-
-        return self._complete_date is None
-
-################################################################################
-    def offer_to_merge(
-        self,
-        comm: TCommission,
-        item: str,
-        qty: int,
-        vip: bool,
-        rush: bool,
-        price: Optional[int]
-    ) -> bool:
-
-        pass
 
 ################################################################################
     def update(self) -> None:

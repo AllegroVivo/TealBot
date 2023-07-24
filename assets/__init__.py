@@ -1,4 +1,3 @@
-from .bot import *
-from .commissions import *
-from .config import *
+from .emojis import BotEmojis
+from .images import BotImages
 ################################################################################

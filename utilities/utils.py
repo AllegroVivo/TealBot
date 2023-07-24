@@ -4,9 +4,10 @@ import math
 import re
 
 from datetime       import datetime
-from discord import Colour, Embed, EmbedField
+from discord import Colour, Embed, EmbedField, Interaction
 from discord.embeds import EmptyEmbed
-from typing         import TYPE_CHECKING, Any, List, Optional, Tuple, Union
+from rapidfuzz      import fuzz
+from typing         import TYPE_CHECKING, Any, List, Literal, Optional, Tuple, Union
 
 if TYPE_CHECKING:
     pass
@@ -15,7 +16,11 @@ if TYPE_CHECKING:
 __all__ = (
     "make_embed",
     "draw_separator",
-    "titleize"
+    "titleize",
+    "fuzzy_match",
+    "NS",
+    "format_timestamp",
+    "edit_message_helper",
 )
 
 ################################################################################
@@ -24,7 +29,7 @@ def make_embed(
     title: str = EmptyEmbed,
     description: str = EmptyEmbed,
     url: str = EmptyEmbed,
-    color: Union[Colour, int] = EmptyEmbed,
+    color: Optional[Union[Colour, int]] = None,
     thumbnail_url: str = EmptyEmbed,
     image_url: str = EmptyEmbed,
     author_text: str = EmptyEmbed,
@@ -37,7 +42,7 @@ def make_embed(
 ) -> Embed:
 
     embed = Embed(
-        colour=color,
+        colour=color or Colour.teal(),
         title=title,
         description=description,
         url=url
@@ -131,5 +136,86 @@ def titleize(text: str) -> str:
         lambda word: word.group(0).capitalize(),
         text
     )
+
+################################################################################
+def fuzzy_match(t1: str, t2: str) -> float:
+
+    return fuzz.ratio(t1, t2)
+
+################################################################################
+class _NotSet:
+
+    def __eq__(self, other: Any) -> bool:
+
+        return False
+
+    def __bool__(self) -> bool:
+
+        return False
+
+    def __str__(self) -> str:
+
+        return "`Not Set`"
+
+NS = _NotSet()
+
+################################################################################
+TimestampStyle = Literal["f", "F", "d", "D", "t", "T", "R"]
+################################################################################
+def format_timestamp(dt: datetime, style: TimestampStyle | None = None) -> str:
+    """A helper function to format a :class:`datetime.datetime` for presentation within Discord.
+
+    This allows for a locale-independent way of presenting data using Discord specific Markdown.
+
+    +-------------+----------------------------+-----------------+
+    |    Style    |       Example Output       |   Description   |
+    +=============+============================+=================+
+    | t           | 22:57                      | Short Time      |
+    +-------------+----------------------------+-----------------+
+    | T           | 22:57:58                   | Long Time       |
+    +-------------+----------------------------+-----------------+
+    | d           | 17/05/2016                 | Short Date      |
+    +-------------+----------------------------+-----------------+
+    | D           | 17 May 2016                | Long Date       |
+    +-------------+----------------------------+-----------------+
+    | f (default) | 17 May 2016 22:57          | Short Date Time |
+    +-------------+----------------------------+-----------------+
+    | F           | Tuesday, 17 May 2016 22:57 | Long Date Time  |
+    +-------------+----------------------------+-----------------+
+    | R           | 5 years ago                | Relative Time   |
+    +-------------+----------------------------+-----------------+
+
+    Note that the exact output depends on the user's locale setting in the client. The example output
+    presented is using the ``en-GB`` locale.
+
+    .. versionadded:: 2.0
+
+    Parameters
+    ----------
+    dt: :class:`datetime.datetime`
+        The datetime to format.
+    style: :class:`str`
+        The style to format the datetime with.
+
+    Returns
+    -------
+    :class:`str`
+        The formatted string.
+    """
+    if style is None:
+        return f"<t:{int(dt.timestamp())}>"
+
+    return f"<t:{int(dt.timestamp())}:{style}>"
+
+################################################################################
+async def edit_message_helper(interaction: Interaction, *args, **kwargs) -> None:
+
+    try:
+        await interaction.message.edit(*args, **kwargs)
+    except:
+        try:
+            await interaction.edit_original_response(*args, **kwargs)
+        except:
+            print("Edit Message Helper FAILED")
 
 ################################################################################
