@@ -12,7 +12,9 @@ if TYPE_CHECKING:
 
 __all__ = (
     "TErrorMessage",
-    "ClientAlreadyExistsError"
+    "ClientAlreadyExistsError",
+    "InvalidNumberError",
+    "TypeNotFoundError",
 )
 
 ################################################################################
@@ -57,6 +59,30 @@ class ClientAlreadyExistsError(TErrorMessage):
             title="Client Already Exists",
             message=f"A client already exists for user {user.mention}.",
             solution="Please use the `/clients status` command to edit information."
+        )
+
+################################################################################
+class InvalidNumberError(TErrorMessage):
+
+    def __init__(self, number: str):
+        super().__init__(
+            title="Invalid Number",
+            description=f"Invalid value: |{number}|.",
+            message=f"The value you entered at the prompt was not a valid number.",
+            solution="Only enter whole numbers, nothing other than digits."
+        )
+
+################################################################################
+class TypeNotFoundError(TErrorMessage):
+
+    def __init__(self, invalid_id: int):
+        super().__init__(
+            title="Commission Type Not Found",
+            message=f"No commission type exists with ID `{invalid_id}`.",
+            solution=(
+                "Check the footer of the embed for the commission type you want "
+                "to edit for the correct ID."
+            )
         )
 
 ################################################################################

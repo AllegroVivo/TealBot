@@ -5,14 +5,12 @@ import psycopg2
 import uuid
 
 from datetime import datetime
-from discord import User
+from discord import Guild, User
 from dotenv import load_dotenv
-from typing import TYPE_CHECKING, Optional
-
-from .enums import *
+from typing import TYPE_CHECKING, List, Optional
 
 if TYPE_CHECKING:
-    pass
+    from psycopg2.extensions import cursor
 ################################################################################
 
 __all__ = (
@@ -22,6 +20,7 @@ __all__ = (
     "new_client_entry",
     "new_commission_type",
     "new_commission_item",
+    "assert_guild_records",
 )
 
 ################################################################################
@@ -35,7 +34,30 @@ print("Database connection initialized...")
 ################################################################################
 def assert_db_structure() -> None:
 
-    c = db_connection.cursor()
+    cur = db_connection.cursor()
+
+    assert_system_tables(cur)
+    assert_comm_tables(cur)
+
+    db_connection.commit()
+    cur.close()
+
+    return
+
+################################################################################
+def assert_system_tables(c: cursor) -> None:
+
+    c.execute(
+        "CREATE TABLE IF NOT EXISTS config("
+        "guild_id BIGINT UNIQUE NOT NULL,"
+        "post_channel BIGINT,"
+        "CONSTRAINT config_pkey PRIMARY KEY (guild_id))"
+    )
+
+    return
+
+################################################################################
+def assert_comm_tables(c: cursor) -> None:
 
     c.execute(
         "CREATE TABLE IF NOT EXISTS clients("
@@ -89,10 +111,11 @@ def assert_db_structure() -> None:
     )
     c.execute(
         "CREATE TABLE IF NOT EXISTS commission_types("
-        "type_id TEXT UNIQUE NOT NULL,"
+        "type_id SERIAL,"
         "name TEXT,"
         "description TEXT,"
-        "PRICE INTEGER,"
+        "price INTEGER,"
+        "image TEXT,"
         "CONSTRAINT commission_types_pkey PRIMARY KEY (type_id))"
     )
 
@@ -117,9 +140,6 @@ def assert_db_structure() -> None:
         "JOIN commission_details cd ON c.commission_id = cd.commission_id "
         "JOIN commission_dates cdt ON c.commission_id = cdt.commission_id;"
     )
-
-    db_connection.commit()
-    c.close()
 
     return
 
@@ -170,23 +190,21 @@ def new_client_entry(user: User) -> None:
     return
 
 ################################################################################
-def new_commission_type(name: str, price: int, description: Optional[str]) -> str:
-
-    item_id = uuid.uuid4().hex
+def new_commission_type(name: str, price: int, description: Optional[str]) -> int:
 
     c = db_connection.cursor()
     c.execute(
-        "INSERT INTO commission_types (type_id, name, description, price) "
-        "VALUES (%s, %s, %s, %s)",
-        (
-            item_id, name, description, price
-        )
+        "INSERT INTO commission_types (name, description, price) "
+        "VALUES (%s, %s, %s) RETURNING type_id",
+        (name, description, price)
     )
+
+    type_id = c.fetchone()[0]
 
     db_connection.commit()
     c.close()
 
-    return item_id
+    return type_id
 
 ################################################################################
 def new_commission_item(
@@ -211,5 +229,35 @@ def new_commission_item(
     c.close()
 
     return item_id
+
+################################################################################
+def new_guild_entry(guild: Guild) -> None:
+
+    c = db_connection.cursor()
+    c.execute(
+        "INSERT INTO config (guild_id) VALUES (%s)",
+        (guild.id,)
+    )
+
+    db_connection.commit()
+    c.close()
+
+    return
+
+################################################################################
+def assert_guild_records(guilds: List[Guild]) -> None:
+
+    c = db_connection.cursor()
+
+    for guild in guilds:
+        c.execute(
+            "INSERT INTO config (guild_id) VALUES (%s) ON CONFLICT DO NOTHING",
+            (guild.id,)
+        )
+
+    db_connection.commit()
+    c.close()
+
+    return
 
 ################################################################################

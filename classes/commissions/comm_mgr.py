@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from classes.bot import TealBot
     from .commission import TCommission
     from .client import TClient
-    from .type import TCommissionType
+    from .comm_type import TCommissionType
 ################################################################################
 
 __all__ = (

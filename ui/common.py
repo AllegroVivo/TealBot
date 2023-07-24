@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from discord import ButtonStyle, Interaction, Member, User
-from discord.ext.pages import Paginator
+from discord import ButtonStyle, Embed, Interaction, Member, NotFound, User
+from discord.ext.pages import Page, Paginator
 from discord.ui import Button, button, Modal
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Union
 
 from .view import TealView
 
 if TYPE_CHECKING:
-    pass
+    from classes.commissions import TClientManager, TCommissionManager, TCommissionTypeManager
 ################################################################################
 
 __all__ = (
@@ -17,6 +17,7 @@ __all__ = (
     "CloseMessageView",
     "TSectionButton",
     "TealModal",
+    "Frogginator"
 )
 
 ################################################################################
@@ -105,5 +106,54 @@ class TealModal(Modal):
 
         self.complete: bool = False
         self.value: Optional[Any] = None
+
+################################################################################
+class Frogginator(Paginator):
+
+    def __init__(
+        self,
+        pages: List[Page],
+        obj_ref: Union[TClientManager, TCommissionManager, TCommissionTypeManager],
+        close_on_complete: bool = False,
+        **kwargs
+    ):
+
+        super().__init__(pages=pages, author_check=True, **kwargs)
+
+        self.obj_ref: Union[TClientManager, TCommissionManager, TCommissionTypeManager] = obj_ref
+        self._interaction: Optional[Interaction] = None
+        self._close_on_complete: bool = close_on_complete
+
+################################################################################
+    async def interaction_check(self, interaction: Interaction) -> bool:
+
+        self._interaction = interaction
+        return await super().interaction_check(interaction)
+
+################################################################################
+    async def on_timeout(self) -> None:
+
+        try:
+            await super().on_timeout()
+        except NotFound:
+            pass
+        except:
+            raise
+
+################################################################################
+    async def cancel(
+        self,
+        include_custom: bool = False,
+        page: Optional[str, Page, List[Embed], Embed] = None,
+    ) -> None:
+
+        if self._close_on_complete:
+            if self._interaction is not None:
+                try:
+                    await self.message.delete()
+                except:
+                    print("Error in Frogginator Cancel")
+        else:
+            await super().cancel(include_custom, page)
 
 ################################################################################

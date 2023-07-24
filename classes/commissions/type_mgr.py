@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 from discord import Embed, EmbedField, Interaction
+from discord.ext.pages import Page
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Type, TypeVar
 
-from .type import TCommissionType
+from .comm_type import TCommissionType
+from ui.common import *
+from ui.types import *
 from utilities import *
 
 if TYPE_CHECKING:
@@ -26,10 +29,10 @@ class TCommissionTypeManager:
     def __init__(self, parent: TealBot):
 
         self._parent: TealBot = parent
-        self._types: Dict[str, TCommissionType] = {}  # Maps commission type name to CommissionType object.
+        self._types: Dict[int, TCommissionType] = {}  # Maps commission type id to CommissionType object.
 
 ################################################################################
-    def __getitem__(self, key: str) -> Optional[TCommissionType]:
+    def __getitem__(self, key: int) -> Optional[TCommissionType]:
 
         try:
             return self._types[key]
@@ -37,7 +40,7 @@ class TCommissionTypeManager:
             return None
 
 ################################################################################
-    def __contains__(self, key: str) -> bool:
+    def __contains__(self, key: int) -> bool:
 
         return key in self._types
 
@@ -46,6 +49,11 @@ class TCommissionTypeManager:
     def types(self) -> List[TCommissionType]:
 
         return [t for t in self._types.values()]
+
+################################################################################
+    def load_type(self, data: Tuple[int, str, int, Optional[str], Optional[str]]) -> None:
+
+        self._types[data[0]] = TCommissionType.load(self, data)
 
 ################################################################################
     def status(self) -> Embed:
@@ -94,8 +102,75 @@ class TCommissionTypeManager:
         await interaction.response.send_message(embed=status)
 
 ################################################################################
-    def add_type(self, name: str, price: int, description: Optional[str]) -> None:
+    async def add_type(self, interaction: Interaction) -> None:
 
-        self._types[name] = TCommissionType.new(name, price, description)
+        modal = CommissionTypeModal()
+
+        await interaction.response.send_modal(modal)
+        await modal.wait()
+
+        if not modal.complete:
+            return
+
+        name, price, description = modal.value
+        new_type = TCommissionType.new(self, name, price, description)
+
+        self._types[name] = new_type
+
+        # Emulate the Type main menu since we need to do a followup here
+        # instead of an initial response.
+        embed = new_type.status()
+        view = CommissionTypeStatusView(interaction.user, new_type)
+
+        await interaction.followup.send(embed=embed, view=view)
+        await view.wait()
+
+        return
+
+################################################################################
+    @staticmethod
+    async def edit_type(interaction: Interaction, comm_type: TCommissionType) -> None:
+
+        status = comm_type.status()
+        view = CommissionTypeStatusView(interaction.user, comm_type)
+
+        await interaction.response.send_message(embed=status, view=view)
+        await view.wait()
+
+        return
+
+################################################################################
+    async def status_all(self, interaction: Interaction) -> None:
+
+        await interaction.response.send_message(embed=self.status())
+
+################################################################################
+    async def remove_type(self, interaction: Interaction, type_id: int) -> None:
+
+        c = db_connection.cursor()
+        c.execute(
+            "DELETE FROM commission_types WHERE type_id = %s",
+            (type_id,)
+        )
+
+        db_connection.commit()
+        c.close()
+
+        complete = make_embed(
+            title="Commission Type Removed",
+            description=(
+                f"Commission type __**{self[type_id].name}**__ has been removed.\n"
+                f"{draw_separator(extra=25)}"
+            )
+        )
+        view = CloseMessageView(interaction.user)
+
+        # Delete it here, so we can still reference it in the confirmation message.
+        self.types.remove(self[type_id])
+
+        await interaction.followup.send(embed=complete, view=view)
+        await view.wait()
+
+        return
 
 ################################################################################

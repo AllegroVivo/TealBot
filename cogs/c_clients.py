@@ -50,7 +50,8 @@ class Clients(Cog):
             await ctx.respond(embed=error, ephemeral=True)
             return
 
-        await cm.add_client(ctx.interaction, user)
+        client = await cm.add_client(ctx.interaction, user)
+        await client.main_menu(ctx.interaction)
 
 ################################################################################
     @clients.command(
@@ -68,11 +69,11 @@ class Clients(Cog):
         )
     ) -> None:
 
-        cm = self.bot.commission_manager
+        cm = self.bot.client_manager
 
-        client = cm.get_client(user)
+        client = cm[user.id]
         if client is None:
-            client = await cm.add_client(user)
+            client = await cm.add_client(ctx.interaction, user)
 
         await client.main_menu(ctx.interaction)
 

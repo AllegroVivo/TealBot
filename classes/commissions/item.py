@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, Type, TypeVar
 
-from .type import TCommissionType
+from .comm_type import TCommissionType
 from utilities import *
 
 if TYPE_CHECKING:

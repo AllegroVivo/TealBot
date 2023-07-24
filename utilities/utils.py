@@ -9,6 +9,8 @@ from discord.embeds import EmptyEmbed
 from rapidfuzz      import fuzz
 from typing         import TYPE_CHECKING, Any, List, Literal, Optional, Tuple, Union
 
+from assets import BotImages
+
 if TYPE_CHECKING:
     pass
 ################################################################################
@@ -57,6 +59,12 @@ def make_embed(
             url=author_url,
             icon_url=author_icon
         )
+    # else:
+    #     embed.set_author(
+    #         name="*•.¸♡ Teal Creations ♡¸.•*",
+    #         url="https://tealcreations.art/",
+    #         icon_url=BotImages.TealLogo
+    #     )
 
     if footer_text is not EmptyEmbed:
         embed.set_footer(
